@@ -142,35 +142,35 @@ function gitdownloader(){
 	done
 }
 
-cd $BGM
+cd $BGM || exit
 BGMFILES=("bgm_system.sh" "bgm_control.sh" "bgm_settings.ini" "version.sh")
 gitdownloader ${BGMFILES[@]} "/RetroPie-BGM-Player"
 
-cd $BGMCONTROL
+cd $BGMCONTROL || exit
 BGMFILES=("bgm_updater.sh")
 gitdownloader ${BGMFILES[@]} "/RetroPie-BGM-Player/bgm_control"
 
-cd $BGMCONTROLGENERAL
+cd $BGMCONTROLGENERAL || exit
 BGMFILES=("bgm_general.sh" "bgm_setplayer.sh" "bgm_settoggle.sh" "bgm_setvolume.sh" "bgm_setplayercustom.sh")
 gitdownloader ${BGMFILES[@]} "/RetroPie-BGM-Player/bgm_control/general"
 
-cd $BGMCONTROLPLAY
+cd $BGMCONTROLPLAY || exit
 BGMFILES=("bgm_play.sh" "bgm_setdelay.sh" "bgm_setfade.sh" "bgm_setnonstop.sh")
 gitdownloader ${BGMFILES[@]} "/RetroPie-BGM-Player/bgm_control/play"
 
-cd $BGMCONTROLPLAYER
+cd $BGMCONTROLPLAYER || exit
 BGMFILES=("bgm_player.sh" "bgm_reloadaudio.sh")
 gitdownloader ${BGMFILES[@]} "/RetroPie-BGM-Player/bgm_control/player"
 
-cd $RPMENU
+cd $RPMENU || exit
 BGMFILES=("RetroPie-BGM-Player.sh")
 gitdownloader ${BGMFILES[@]} "/RetroPie-BGM-Player"
 
-cd $AUD
+cd $AUD || exit
 BGMFILES=("config" )
 gitdownloader ${BGMFILES[@]} "/audconfig"
 
-cd $BGMMUSICS
+cd $BGMMUSICS || exit
 BGMFILES=("music.zip")
 gitdownloader ${BGMFILES[@]} "/music"
 unzip -o music.zip  && rm -f music.zip
@@ -183,7 +183,7 @@ chmod 0444 $AUD/config
 echo -e " ${LRED}-${NC}${WHITE} Writing commands...${NC}"
 sleep 1
 
-cd $RPCONFIGS
+cd $RPCONFIGS || exit
 echo -e " ${LRED}--${NC}${WHITE} Writing on runcommand commands...${NC}"
 sleep 1
 function runcommandsetup(){

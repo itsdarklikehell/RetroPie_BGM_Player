@@ -50,7 +50,7 @@ function main_menu() {
 function dlversion(){
 	clear
 	echo -e "[Checking for updates...]"
-	cd $HOME
+	cd $HOME || exit
 	if wget -N -q --show-progress $GITVERSION; then
 		chmod a+rwx $HOME/version.sh
 		source $HOME/version.sh >/dev/null 2>&1
@@ -92,7 +92,7 @@ function update(){
 
 function updateinstall(){
 	clear
-	cd $HOME
+	cd $HOME || exit
 	echo -e "[Downloading Installation File]\n\n"
 	if wget -N -q --show-progress $GITINSTALL; then
 		chmod a+rwx $HOME/install.sh
