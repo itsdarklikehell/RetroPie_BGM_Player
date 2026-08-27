@@ -1,149 +1,241 @@
 #!/bin/bash 
 #####################################################################
 #Project		:	RetroPie_BGM_Player
+#Version		:	2.0
+#Git			:	https://github.com/Naprosnia/RetroPie_BGM_Player
+#####################################################################
 #Script Name	:	install.sh
-#Version		:	1.5
-#Date			:	20190205	(YYYYMMDD)
-#Description	:	This script installs  RetroPie_BGM_Player,
-#				:	that adds support for background music on
-#				:	EmulationStation, using RetroPie.
-#Usage			:	sudo bash install.sh
-#Author       	:	Luís Torres aka Naprosnia
-#Git         	:	https://github.com/Naprosnia/RetroPie_BGM_Player
+#Date			:	20190227	(YYYYMMDD)
+#Description	:	The installation script.
+#Usage			:	wget -N https://raw.githubusercontent.com/Naprosnia/RetroPie_BGM_Player/master/install.sh
+#				:	chmod +x install.sh
+#				:	bash install.sh
+#Author       	:	Luis Torres aka Naprosnia
+#####################################################################
+#Credits		:	crcerror : https://github.com/crcerror
 #####################################################################
 
+GREEN='\033[0;32m'
+LGREEN='\033[1;32m'
+RED='\033[0;31m'
+LRED='\033[1;31m'
+BLUE='\033[0;34m'
+WHITE='\033[1;37m'
+ORANGE='\033[0;33m'
+NC='\033[0m'
+
 clear
-echo -e "####################################"
-echo -e "#  Installing RetroPie_BGM_Player  #"
-echo -e "####################################\n"
+echo -e " ${LRED}####################################${NC}"
+echo -e " ${LRED}#${NC}  ${GREEN}Installing RetroPie_BGM_Player${NC}  ${LRED}#${NC}"
+echo -e " ${LRED}####################################${NC}\n"
 
-installscript="$0"
+BGMGITBRANCH="dev"
+RP="$HOME/RetroPie"
+RPMENU="$RP/retropiemenu"
+RPSETUP="$HOME/RetroPie-Setup"
+RPCONFIGS="/opt/retropie/configs/all"
+BGM="$HOME/RetroPie-BGM-Player"
+BGMCONTROL="$BGM/bgm_control"
+BGMCONTROLGENERAL="$BGMCONTROL/general"
+BGMCONTROLPLAY="$BGMCONTROL/play"
+BGMCONTROLPLAYER="$BGMCONTROL/player"
+BGMLISTS="$BGM/bgm_lists"
+BGMBOTH="$BGMLISTS/both"
+BGMEMU="$BGMLISTS/emu"
+BGMMP3="$BGMLISTS/mp3"
+BGMCUSTOM="$BGMLISTS/custom"
+BGMMUSICS="$RP/roms/music"
+BGMOLD="$RPCONFIGS/retropie_bgm_player"
+AUD="$HOME/.config/audacious"
 
-##check mpg123 player installation
-player=mpg123
+SCRIPTPATH=$(realpath $0)
 
-function check_install(){
-	player_status=$(dpkg-query -W --showformat='${Status}\n' $player  2> /dev/null|grep "install ok installed")
-	if [ "" == "$player_status" ]; then
-		return 0
+
+echo -e " ${LRED}[${NC}${LGREEN} Preparing Installation ${NC}${LRED}]${NC}"
+sleep 1
+
+########################
+##   Kill Processes   ##
+########################
+echo -e " ${LRED}-${NC}${WHITE} Killing some processes...${NC}"
+killall audacious mpg123 >/dev/null 2>&1
+########################
+########################
+
+########################
+##remove older version##
+########################
+echo -e " ${LRED}-${NC}${WHITE} Removing older versions...${NC}"
+rm -rf $BGMOLD
+rm -rf $BGM
+rm -rf $AUD
+[ -e $RPMENU/Background\ Music\ Settings.sh ] && rm -f $RPMENU/Background\ Music\ Settings.sh
+#use sudo because, owner can be root or file created incorrectly for any reason
+sudo chmod 777 $RPCONFIGS/runcommand-onstart.sh $RPCONFIGS/runcommand-onend.sh $RPCONFIGS/autostart.sh >/dev/null 2>&1
+sed -i "/retropie_bgm_player\/bgm_stop.sh/d" $RPCONFIGS/runcommand-onstart.sh >/dev/null 2>&1
+sed -i "/retropie_bgm_player\/bgm_play.sh/d" $RPCONFIGS/runcommand-onend.sh >/dev/null 2>&1
+sed -i "/retropie_bgm_player\/bgm_init.sh/d" $RPCONFIGS/autostart.sh >/dev/null 2>&1
+########################
+########################
+
+#############################
+##Packages and Dependencies##
+#############################
+echo -e "\n ${LRED}[${NC} ${LGREEN}Packages and Dependencies Installation${NC} ${LRED}]${NC}"
+sleep 1
+
+echo -e " ${LRED}-${NC}${WHITE} Checking packages and dependencies...${NC}"
+sleep 1
+
+packages=("unzip" "mpg123" "audacious" "audacious-plugins")
+
+for package in "${packages[@]}"; do
+	if dpkg -s $package >/dev/null 2>&1; then
+		echo -e " ${LRED}--${NC}${WHITE} $package : ${NC}${LGREEN}Installed${NC}"
 	else
-		return 1
+		echo -e " ${LRED}--${NC}${WHITE} $package : ${NC}${LRED}Not Installed${NC}"
+		installpackages+=("$package")
 	fi
+done
+
+if [ ${#installpackages[@]} -gt 0 ]; then
+	
+	echo -e " ${LRED}---${NC}${WHITE} Installing missing packages and dependencies...${NC}${ORANGE}\n"
+	sleep 1
+	
+	sudo apt-get update; sudo apt-get install -y ${installpackages[@]}
+
+fi
+echo -e "\n ${NC}${LRED}--${NC}${GREEN} All packages and dependencies are installed.${NC}\n"
+sleep 1
+########################
+########################
+
+########################
+## Install BGM Player ##
+########################
+
+echo -e " ${LRED}[${NC}${LGREEN} Installing RetroPie BGM Player v2 ${NC}${LRED}]${NC}"
+sleep 1
+
+echo -e " ${LRED}-${NC}${WHITE} Change some permissions...${NC}"
+sleep 1
+sudo chmod -R 777 $RPCONFIGS
+
+echo -e " ${LRED}-${NC}${WHITE} Creating folders...${NC}"
+sleep 1
+mkdir -p -m 0777 $BGMCONTROLGENERAL $BGMCONTROLPLAY $BGMCONTROLPLAYER $BGMBOTH $BGMEMU $BGMMP3 $BGMCUSTOM $BGMMUSICS $AUD
+
+echo -e " ${LRED}--${NC}${WHITE} Downloading system files...${NC}${ORANGE}\n"
+sleep 1
+
+function gitdownloader(){
+
+	files=("$@")
+	((last_id=${#files[@]} - 1))
+	path=${files[last_id]}
+	unset files[last_id]
+
+	for i in "${files[@]}"; do
+		wget -N -q --show-progress "https://raw.githubusercontent.com/Naprosnia/RetroPie_BGM_Player/$BGMGITBRANCH$path/$i"
+		#chmod a+rwx "$i"
+	done
 }
 
-echo -e "[Checking player installation...]"
-sleep 2
+cd $BGM || exit
+BGMFILES=("bgm_system.sh" "bgm_control.sh" "bgm_settings.ini" "version.sh")
+gitdownloader ${BGMFILES[@]} "/RetroPie-BGM-Player"
 
-if check_install; then
-	echo -e "-Player not installed..."
-	sleep 2
-	echo -e "--Installing it now...\n"
-	sleep 2
-	sudo apt-get update; sudo apt-get install -y $player
-	echo -e "\n---Checking installation result..."
-	sleep 2
-	
-	if check_install; then
-		echo -e "----Player not installed correctly. Aborting script...\n\n"
-		sleep 2
-		sudo shred -u ${installscript} >/dev/null 2>&1
-		exit
-	else
-		echo -e "----Player installed successfully, proceeding with the installation...\n"
-		sleep 2
-	fi	
-	
-else
-	echo -e "-Player already installed, proceeding with the installation...\n"
-	sleep 2
-	
-fi
+cd $BGMCONTROL || exit
+BGMFILES=("bgm_updater.sh")
+gitdownloader ${BGMFILES[@]} "/RetroPie-BGM-Player/bgm_control"
 
-##create retropie_bgm_player directory and copying files
-echo -e "[Preparing scripts...]"
-sleep 2
-echo -e "-Creating folders..."
-sudo mkdir -p -m 777 /opt/retropie/configs/all/retropie_bgm_player
-sleep 2
-echo -e "-Downloading files...\n"
-sudo wget -N https://raw.githubusercontent.com/Naprosnia/RetroPie_BGM_Player/master/retropie_bgm_player/Background%20Music%20Settings.sh -P /home/pi/RetroPie/retropiemenu/
-sudo wget -N https://raw.githubusercontent.com/Naprosnia/RetroPie_BGM_Player/master/retropie_bgm_player/bgm_init.sh -P /opt/retropie/configs/all/retropie_bgm_player/
-sudo wget -N https://raw.githubusercontent.com/Naprosnia/RetroPie_BGM_Player/master/retropie_bgm_player/bgm_play.sh -P /opt/retropie/configs/all/retropie_bgm_player/
-sudo wget -N https://raw.githubusercontent.com/Naprosnia/RetroPie_BGM_Player/master/retropie_bgm_player/bgm_stop.sh -P /opt/retropie/configs/all/retropie_bgm_player/
-sudo wget -N https://raw.githubusercontent.com/Naprosnia/RetroPie_BGM_Player/master/retropie_bgm_player/bgmvolume.sh -P /opt/retropie/configs/all/retropie_bgm_player/
-sudo wget -N https://raw.githubusercontent.com/Naprosnia/RetroPie_BGM_Player/master/retropie_bgm_player/togglebgm.sh -P /opt/retropie/configs/all/retropie_bgm_player/
-echo -e "\n-Setting permissions...\n"
-sleep 2
-sudo chmod 777 /home/pi/RetroPie/retropiemenu/Background\ Music\ Settings.sh
-sudo chmod 777 /opt/retropie/configs/all/retropie_bgm_player/*.*
+cd $BGMCONTROLGENERAL || exit
+BGMFILES=("bgm_general.sh" "bgm_setplayer.sh" "bgm_settoggle.sh" "bgm_setvolume.sh" "bgm_setplayercustom.sh")
+gitdownloader ${BGMFILES[@]} "/RetroPie-BGM-Player/bgm_control/general"
 
-##installing
-echo -e "[Installing RetroPie_BGM_Player...]"
-sleep 2
-#checking runcommand scripts
-echo -e "-Setting up runcommand scripts..."
-sleep 2
+cd $BGMCONTROLPLAY || exit
+BGMFILES=("bgm_play.sh" "bgm_setdelay.sh" "bgm_setfade.sh" "bgm_setnonstop.sh")
+gitdownloader ${BGMFILES[@]} "/RetroPie-BGM-Player/bgm_control/play"
 
-if [ ! -e "/opt/retropie/configs/all/runcommand-onstart.sh" ]; then
-	echo -e "-- runcommand-onstart.sh not found, installing..."
-	sudo echo "bash '/opt/retropie/configs/all/retropie_bgm_player/bgm_stop.sh'" > /opt/retropie/configs/all/runcommand-onstart.sh
-	sudo chmod 777 /opt/retropie/configs/all/runcommand-onstart.sh
-else
-	echo -e "-- runcommand-onstart.sh found, installing..."
-	sudo chmod 777 /opt/retropie/configs/all/runcommand-onstart.sh
-	if [ -s /opt/retropie/configs/all/runcommand-onstart.sh ]; then
-		sudo sed -i "1 i bash '/opt/retropie/configs/all/retropie_bgm_player/bgm_stop.sh'" /opt/retropie/configs/all/runcommand-onstart.sh
-	else
-		sudo echo "bash '/opt/retropie/configs/all/retropie_bgm_player/bgm_stop.sh'" > /opt/retropie/configs/all/runcommand-onstart.sh
+cd $BGMCONTROLPLAYER || exit
+BGMFILES=("bgm_player.sh" "bgm_reloadaudio.sh")
+gitdownloader ${BGMFILES[@]} "/RetroPie-BGM-Player/bgm_control/player"
+
+cd $RPMENU || exit
+BGMFILES=("RetroPie-BGM-Player.sh")
+gitdownloader ${BGMFILES[@]} "/RetroPie-BGM-Player"
+
+cd $AUD || exit
+BGMFILES=("config" )
+gitdownloader ${BGMFILES[@]} "/audconfig"
+
+cd $BGMMUSICS || exit
+BGMFILES=("music.zip")
+gitdownloader ${BGMFILES[@]} "/music"
+unzip -o music.zip  && rm -f music.zip
+
+echo -e "\n ${NC}${LRED}--${NC}${WHITE} Applying permissions...${NC}"
+sleep 1
+chmod -R a+rwx $BGM $BGMMUSICS
+chmod 0444 $AUD/config
+
+echo -e " ${LRED}-${NC}${WHITE} Writing commands...${NC}"
+sleep 1
+
+cd $RPCONFIGS || exit
+echo -e " ${LRED}--${NC}${WHITE} Writing on runcommand commands...${NC}"
+sleep 1
+function runcommandsetup(){
+
+	file=$1
+	command=$2
+
+	if [ ! -e $file ]; then
+			echo -e " ${LRED}---${NC}${WHITE} $file not found, creating...${NC}"
+			sleep 1
+			touch $file
+			sleep 0.5
+			chmod a+rwx $file
+			sleep 0.5
+			echo "$command" > $file
+		else
+			echo -e " ${LRED}---${NC}${WHITE} $file found, writing...${NC}"
+			sleep 1
+			#use sudo because, owner can be root or file created incorrectly for any reason
+			sudo chmod 777 $file
+			sleep 0.5
+			sed -i "/bgm_system.sh/d" $file
+			[ -s $file ] && sed -i "1i $command" $file || echo "$command" > $file
 	fi
-fi
+}
+runcommandsetup "runcommand-onstart.sh" "bash \$HOME/RetroPie-BGM-Player/bgm_system.sh -s"
+runcommandsetup "runcommand-onend.sh" "bash \$HOME/RetroPie-BGM-Player/bgm_system.sh -p"
+sleep 1
+echo -e " ${LRED}--${NC}${WHITE} Writing on autostart script...${NC}"
+sleep 1
+#use sudo because, owner can be root or file created incorrectly for any reason
+sudo chmod 777 autostart.sh
+sed -i "/bgm_system.sh/d" autostart.sh
+sed -i "1 i bash \$HOME/RetroPie-BGM-Player/bgm_system.sh -i --autostart" autostart.sh
+sleep 1
 
-if [ ! -e "/opt/retropie/configs/all/runcommand-onend.sh" ]; then
-	echo -e "-- runcommand-onend.sh not found, installing..."
-	sudo echo "bash '/opt/retropie/configs/all/retropie_bgm_player/bgm_play.sh'" > /opt/retropie/configs/all/runcommand-onend.sh
-	sudo chmod 777 /opt/retropie/configs/all/runcommand-onend.sh
+echo -e "\n ${LRED}[${NC}${LGREEN} Installation Finished ${NC}${LRED}]${NC}\n"
+sleep 1
+########################
+########################
+
+########################
+##       Restart      ##
+########################
+if [ "$1" == "--update" ]; then
+	(rm -f $SCRIPTPATH; bash $BGMCONTROL/bgm_updater.sh --reboot)
 else
-	echo -e "-- runcommand-onend.sh found, installing..."
-	sudo chmod 777 /opt/retropie/configs/all/runcommand-onend.sh
-	if [ -s /opt/retropie/configs/all/runcommand-onend.sh ]; then
-		sudo sed -i "1 i bash '/opt/retropie/configs/all/retropie_bgm_player/bgm_play.sh'" /opt/retropie/configs/all/runcommand-onend.sh
-	else
-		sudo echo "bash '/opt/retropie/configs/all/retropie_bgm_player/bgm_play.sh'" > /opt/retropie/configs/all/runcommand-onend.sh
-	fi
+	echo -e " ${LRED}[${NC}${LGREEN} Restart System ${NC}${LRED}]${NC}"
+	echo -e " ${LRED}-${NC}${WHITE} To finish, we need to reboot.${NC}${ORANGE}\n"
+	read -n 1 -s -r -p " Press any key to Restart."
+	echo -e "${NC}\n"
+	(rm -f $SCRIPTPATH; sudo reboot)
 fi
-
-#prepare start script on autostart.sh
-echo -e "-Setting up autostart script..."
-sleep 2
-sudo chmod 777 /opt/retropie/configs/all/autostart.sh
-sudo sed -i "1 i bash '/opt/retropie/configs/all/retropie_bgm_player/bgm_init.sh'" /opt/retropie/configs/all/autostart.sh
-
-#prepare music folder
-echo -e "-Setting up music folder..."
-sleep 2
-sudo mkdir -p -m 777 /home/pi/RetroPie/roms/music
-echo -e "--Downloading some music files...\n"
-sudo wget -N https://github.com/Naprosnia/RetroPie_BGM_Player/raw/master/music/1.mp3 -P /home/pi/RetroPie/roms/music/
-sudo wget -N https://github.com/Naprosnia/RetroPie_BGM_Player/raw/master/music/2.mp3 -P /home/pi/RetroPie/roms/music/
-sudo wget -N https://github.com/Naprosnia/RetroPie_BGM_Player/raw/master/music/3.mp3 -P /home/pi/RetroPie/roms/music/
-sudo wget -N https://github.com/Naprosnia/RetroPie_BGM_Player/raw/master/music/4.mp3 -P /home/pi/RetroPie/roms/music/
-sudo wget -N https://github.com/Naprosnia/RetroPie_BGM_Player/raw/master/music/5.mp3 -P /home/pi/RetroPie/roms/music/
-sudo wget -N https://github.com/Naprosnia/RetroPie_BGM_Player/raw/master/music/6.mp3 -P /home/pi/RetroPie/roms/music/
-sudo chmod 777 /home/pi/RetroPie/roms/music/*.*
-echo -e "\n"
-
-echo -e "[Instalation finished.]\n"
-sleep 2
-
-#show some info
-echo -e "[INFO]"
-echo -e "You can now change background music volume and enbale/disable it from RetroPie menu."
-echo -e "You will find there an option called Background Music Settings. All changes are saved.\n"
-echo -e "To add new music or delete the installed ones, use the folder music installed on roms folder. ( /roms/music/ )."
-echo -e "The player only reads mp3 files.\n"
-
-#restart system
-echo -e "[Restart EmulationStation]"
-echo -e "-To finish, we need to restart EmulationStation.\n"
-read -n 1 -s -r -p "Press any key to Restart."
-sudo shred -u ${installscript} >/dev/null 2>&1; sudo reboot
+########################
+########################
