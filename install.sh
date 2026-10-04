@@ -1,4 +1,5 @@
 #!/bin/bash 
+set -euo pipefail
 #####################################################################
 #Project		:	RetroPie_BGM_Player
 #Version		:	2.0
