@@ -15,6 +15,7 @@
 #Credits		:	crcerror : https://github.com/crcerror
 #####################################################################
 
+set -euo pipefail
 GREEN='\033[0;32m'
 LGREEN='\033[1;32m'
 RED='\033[0;31m'
@@ -71,7 +72,7 @@ rm -rf $BGM
 rm -rf $AUD
 [ -e $RPMENU/Background\ Music\ Settings.sh ] && rm -f $RPMENU/Background\ Music\ Settings.sh
 #use sudo because, owner can be root or file created incorrectly for any reason
-sudo chmod 777 $RPCONFIGS/runcommand-onstart.sh $RPCONFIGS/runcommand-onend.sh $RPCONFIGS/autostart.sh >/dev/null 2>&1
+sudo chmod 755 $RPCONFIGS/runcommand-onstart.sh $RPCONFIGS/runcommand-onend.sh $RPCONFIGS/autostart.sh >/dev/null 2>&1
 sed -i "/retropie_bgm_player\/bgm_stop.sh/d" $RPCONFIGS/runcommand-onstart.sh >/dev/null 2>&1
 sed -i "/retropie_bgm_player\/bgm_play.sh/d" $RPCONFIGS/runcommand-onend.sh >/dev/null 2>&1
 sed -i "/retropie_bgm_player\/bgm_init.sh/d" $RPCONFIGS/autostart.sh >/dev/null 2>&1
@@ -120,7 +121,7 @@ sleep 1
 
 echo -e " ${LRED}-${NC}${WHITE} Change some permissions...${NC}"
 sleep 1
-sudo chmod -R 777 $RPCONFIGS
+sudo chmod -R 755 $RPCONFIGS
 
 echo -e " ${LRED}-${NC}${WHITE} Creating folders...${NC}"
 sleep 1
@@ -177,7 +178,7 @@ unzip -o music.zip  && rm -f music.zip
 
 echo -e "\n ${NC}${LRED}--${NC}${WHITE} Applying permissions...${NC}"
 sleep 1
-chmod -R a+rwx $BGM $BGMMUSICS
+chmod -R 755 $BGM $BGMMUSICS
 chmod 0444 $AUD/config
 
 echo -e " ${LRED}-${NC}${WHITE} Writing commands...${NC}"
@@ -196,14 +197,14 @@ function runcommandsetup(){
 			sleep 1
 			touch $file
 			sleep 0.5
-			chmod a+rwx $file
+			chmod 755 $file
 			sleep 0.5
 			echo "$command" > $file
 		else
 			echo -e " ${LRED}---${NC}${WHITE} $file found, writing...${NC}"
 			sleep 1
 			#use sudo because, owner can be root or file created incorrectly for any reason
-			sudo chmod 777 $file
+			sudo chmod 755 $file
 			sleep 0.5
 			sed -i "/bgm_system.sh/d" $file
 			[ -s $file ] && sed -i "1i $command" $file || echo "$command" > $file
@@ -215,7 +216,7 @@ sleep 1
 echo -e " ${LRED}--${NC}${WHITE} Writing on autostart script...${NC}"
 sleep 1
 #use sudo because, owner can be root or file created incorrectly for any reason
-sudo chmod 777 autostart.sh
+sudo chmod 755 autostart.sh
 sed -i "/bgm_system.sh/d" autostart.sh
 sed -i "1 i bash \$HOME/RetroPie-BGM-Player/bgm_system.sh -i --autostart" autostart.sh
 sleep 1

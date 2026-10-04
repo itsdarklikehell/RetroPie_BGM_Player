@@ -14,6 +14,7 @@
 #Credits		:	crcerror : https://github.com/crcerror
 #####################################################################
 
+set -euo pipefail
 clear
 echo -e "####################################"
 echo -e "#  Uninstall RetroPie_BGM_Player  #"
@@ -49,7 +50,7 @@ sleep 1
 rm -rf $BGMOLD
 [ -e $RPMENU/Background\ Music\ Settings.sh ] && rm -f $RPMENU/Background\ Music\ Settings.sh
 #use sudo because, owner can be root or file created incorrectly for any reason
-sudo chmod 777 $RPCONFIGS/runcommand-onstart.sh $RPCONFIGS/runcommand-onend.sh $RPCONFIGS/autostart.sh >/dev/null 2>&1
+sudo chmod 755 $RPCONFIGS/runcommand-onstart.sh $RPCONFIGS/runcommand-onend.sh $RPCONFIGS/autostart.sh >/dev/null 2>&1
 sed -i "/retropie_bgm_player\/bgm_stop.sh/d" $RPCONFIGS/runcommand-onstart.sh >/dev/null 2>&1
 sed -i "/retropie_bgm_player\/bgm_play.sh/d" $RPCONFIGS/runcommand-onend.sh >/dev/null 2>&1
 sed -i "/retropie_bgm_player\/bgm_init.sh/d" $RPCONFIGS/autostart.sh >/dev/null 2>&1

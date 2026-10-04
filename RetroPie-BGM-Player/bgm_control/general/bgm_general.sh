@@ -13,6 +13,7 @@
 #####################################################################
 
 # shorten paths
+set -euo pipefail
 BGM="$HOME/RetroPie-BGM-Player"
 BGMCONTROL="$BGM/bgm_control"
 BGMCONTROLGENERAL="$BGMCONTROL/general"
