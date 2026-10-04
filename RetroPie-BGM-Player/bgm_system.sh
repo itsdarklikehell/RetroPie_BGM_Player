@@ -13,6 +13,7 @@
 #####################################################################
 
 # Avoid multiple starts, so force close
+set -euo pipefail
 [[ "$(pgrep -c -f $(basename $0))" -gt 1 ]] && exit
 
 # read arguments and execute functions

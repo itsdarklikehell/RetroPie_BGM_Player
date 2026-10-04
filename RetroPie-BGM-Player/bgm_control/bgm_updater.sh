@@ -12,6 +12,7 @@
 #Credits		:	crcerror : https://github.com/crcerror
 #####################################################################
 
+set -euo pipefail
 BGM="$HOME/RetroPie-BGM-Player"
 VERSION="$BGM/version.sh"
 BGMSETTINGS="$BGM/bgm_settings.ini"
